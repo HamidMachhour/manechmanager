@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimary">
+
+        <ImageView
+            android:id="@+id/imgHighlight"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="Highlight"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_highlight_black_24dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <TextView
+            android:id="@+id/tvHostname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:text="HOSTNAME:"
+            android:textColor="@color/colorAccent"
+            android:textSize="18sp"
+            app:layout_constraintStart_toEndOf="@+id/imgHighlight"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvIP"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="IP: 0.0.0.0"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@+id/imgDuplicate"
+            app:layout_constraintLeft_toRightOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/imgHighlight"
+            app:layout_constraintTop_toBottomOf="@+id/tvHostname" />
+
+        <TextView
+            android:id="@+id/tvState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="STATE: Offline"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toStartOf="@+id/imgDuplicate"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvWifiName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="AP NAME:"
+            android:textColor="@color/colorAccent"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@+id/imgHighlight"
+            app:layout_constraintTop_toBottomOf="@id/tvIP" />
+
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="DESCRIPTION:"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imgDelete"
+            app:layout_constraintStart_toEndOf="@+id/imgHighlight"
+            app:layout_constraintTop_toBottomOf="@id/tvWifiName" />
+
+        <ImageView
+            android:id="@+id/imgDuplicate"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="Duplicate"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_copy_black_24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/imgDelete"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Delete"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_delete_forever_24dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</FrameLayout>

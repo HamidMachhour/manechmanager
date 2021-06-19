@@ -1,0 +1,53 @@
+<resources>
+    <string name="app_name">Manech Manager</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="email_warning">Enter a valid email!</string>
+    <string name="password_warning">Password must contain number,\n
+        letter (regular and Capital), and special characters\n
+        Password must be more than 8 characters!\n
+    </string>
+    <string name="password_confirm_warning">Password confirmation error!</string>
+    <string name="user_created_success">Successfully creating new user\'s account</string>
+    <string name="user_create_faild">Fail to create user account!</string>
+    <string name="wrong_auth">Wrong password or email!</string>
+    <string name="add_node">ADD NODE</string>
+
+    <string name="search">SEARCH</string>
+    <string name="register_here">Register here</string>
+    <string name="register">Register</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="track_state">TRACK STATE</string>
+    <string name="manage_account">MANAGE ACCOUNT</string>
+    <string name="logout">LOGOUT</string>
+    <string name="email_already_exists">User with email already exists!</string>
+    <string name="save">SAVE</string>
+    <string name="new_password">New password</string>
+    <string name="current_password">Current password</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_single_node">Delete Node</string>
+
+    <string name="change_password">Change password</string>
+    <string name="take_photo_option">Take Photo</string>
+    <string name="choose_from_gallery_option">Choose from Gallery</string>
+    <string name="cancel_option">Cancel</string>
+    <string name="add_photo_title">Select Photo</string>
+    <string name="delete_account_confirm">Do you really want to delete this account and all it Nodes?</string>
+    <string name="delete_nodes_confirm">Do you really want to delete All Nodes from this account?</string>
+    <string name="delete_node_confirm">Do you really want to delete this Node?</string>
+
+    <string name="home">Home</string>
+    <string name="delete_all">DELETE ALL</string>
+    <string name="download_configuration">DOWNLOAD CONFIGURATION</string>
+    <string name="upload_configuration">UPLOAD CONFIGURATION</string>
+    <string name="highlight">HIGHLIGHT</string>
+    <string name="duplicate">DUPLICATE</string>
+    <string name="delete_node">DELETE NODE</string>
+    <string name="view_nodes">VIEW NODES</string>
+    <string name="wifi_settings">WIFI Settings</string>
+    <string name="ap_settings">Access Point Settings</string>
+    <string name="general_settings">General Settings</string>
+    <string name="please_wait">Please wait...</string>
+    <string name="loading_data">Loading data ...</string>
+</resources>
