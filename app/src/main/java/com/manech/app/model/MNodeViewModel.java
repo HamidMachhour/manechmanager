@@ -20,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -193,17 +194,21 @@ public class MNodeViewModel extends ViewModel {
 
     public void highlight(ManechNode node, MyColor c) {
         if (node == null) return;
+
+        int []indexes=new int[node.getMaxIndex()-node.getMinIndex()+1];
+        for(int i=0;i<indexes.length;indexes[i]=i+node.getMinIndex(),i++);
+
         if (node.isHighlighted()) {
-            animate(node, node.getMinIndex(), node.getMaxIndex(), null, new MyColor(0, 0, 0));
+            animate(node,indexes, new MyColor(0, 0, 0));
         } else {
-            animate(node, node.getMinIndex(), node.getMaxIndex(), null, c);
+            animate(node, indexes, c);
         }
         node.setHighlighted(!node.isHighlighted());
     }
 
-    public JsonArrayRequest prepareRequest(ManechNode node, int a, int b, int[] indexes, MyColor c) {
+    public JsonArrayRequest prepareRequest(ManechNode node, int[] indexes, MyColor c) {
         JSONArray jsonArray;
-        if (node.getDefaultIP() != null && (jsonArray = node.preparePixels(a, b, indexes, c)) != null) {
+        if (node.getDefaultIP() != null && (jsonArray = node.preparePixels(indexes, c)) != null) {
             String url = "http://" + node.getDefaultIP() + "/animate";
             final JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, url, jsonArray,
                     null,
@@ -223,10 +228,10 @@ public class MNodeViewModel extends ViewModel {
         return null;
     }
 
-    public void animate(ManechNode node, int a, int b, int[] indexes, MyColor c) {
+    public void animate(ManechNode node,int[] indexes, MyColor c) {
         executor.execute(() -> {
             if (node != null) {
-                JsonArrayRequest jsonArrayRequest = prepareRequest(node, a, b, indexes, c);
+                JsonArrayRequest jsonArrayRequest = prepareRequest(node, indexes, c);
                 if (jsonArrayRequest != null) {
                     manechNodeRepository.getRequestQueue().add(jsonArrayRequest);
                 }
@@ -234,6 +239,19 @@ public class MNodeViewModel extends ViewModel {
         });
 
     }
+
+    public void locate(long userId, int[] indexes, MyColor c) {
+        executor.execute(() -> {
+            final List<ManechNode> allNodes = manechNodeRepository.getNodesByIndexes(userId,indexes, false);
+            final Iterator<ManechNode> iterator = allNodes.iterator();
+            while(iterator.hasNext()) {
+                JsonArrayRequest jsonArrayRequest = prepareRequest(iterator.next(), indexes, c);
+                if (jsonArrayRequest != null) {
+                    manechNodeRepository.getRequestQueue().add(jsonArrayRequest);
+                }
+            }
+        });
+     }
 
 
     private class CustomRequest extends JsonObjectRequest {

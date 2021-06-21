@@ -26,10 +26,10 @@ public class Injection {
 
     private static Executor getExecutor(){ return Executors.newSingleThreadExecutor(); }
 
-    public static ViewModelFactory provideViewModelFactory(ViewModelStoreOwner viewModelStoreOwner) {
-        ManechNodeRepository manechNodeRepository = getManechNodeRepository((Context)viewModelStoreOwner);
-        UserRepository userRepository = getUserRepository((Context)viewModelStoreOwner);
+    public static ViewModelFactory provideViewModelFactory(Context context) {
+        ManechNodeRepository manechNodeRepository = getManechNodeRepository(context);
+        UserRepository userRepository = getUserRepository(context);
         Executor executor = getExecutor();
-        return new ViewModelFactory(manechNodeRepository, userRepository, executor, viewModelStoreOwner);
+        return new ViewModelFactory(manechNodeRepository, userRepository, executor, context);
     }
 }

@@ -336,33 +336,20 @@ public class ManechNode {
         return manechNode;
     }
 
-    public JSONArray preparePixels(int a, int b, int[] indexes, MyColor c) {
-        if (a > b) {
-            int tmp = a;
-            a = b;
-            b = tmp;
-        }
+    public JSONArray preparePixels(int[] indexes, MyColor c) {
 
         try {
             JSONArray jsonArray = new JSONArray();
             JSONObject animation = new JSONObject();
-            boolean bool = false;
-            if (a >= minIndex && b <= maxIndex) {
-                bool = true;
-                animation.put("min_range", a - minIndex + minPixel);
-                animation.put("max_range", b - minIndex + minPixel);
-            }
             animation.put("color", c.toJSONObject());
 
             if (indexes != null && indexes.length > 0) {
-                String idx = "[";
+                JSONArray idx = new JSONArray();
                 int i;
-                for (i = 0; i < indexes.length - 1; i++) {
-                    if (indexes[i] < minIndex || indexes[i] > maxIndex ||
-                            (bool && indexes[i] >= a && indexes[i] <= b)) continue;
-                    idx += (indexes[i] - minIndex + minPixel) + ",";
+                for (i = 0; i < indexes.length; i++) {
+                    if (indexes[i] < minIndex || indexes[i] > maxIndex) continue;
+                    idx.put(indexes[i] - minIndex + minPixel);
                 }
-                idx += indexes[i] + "]";
                 animation.put("indexes", idx);
             }
             jsonArray.put(animation);

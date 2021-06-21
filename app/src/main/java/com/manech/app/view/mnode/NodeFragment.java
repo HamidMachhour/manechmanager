@@ -2,6 +2,7 @@ package com.manech.app.view.mnode;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -95,7 +96,10 @@ public class NodeFragment extends Fragment implements Observer<ManechNode> {
         mNodeViewModel.getCurrentNode().observe(this,wifiSettingsFragment);
         mNodeViewModel.getCurrentNode().observe(this,this);
 
-        nodeId = getArguments().getLong("nodeId", -1);
+        nodeId =getActivity().getApplicationContext()
+                .getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+                .getLong(getString(R.string.nodeid), -1L);
+
         showProgressDialog();
         mNodeViewModel.fetchNode(nodeId, true);
 
@@ -106,6 +110,12 @@ public class NodeFragment extends Fragment implements Observer<ManechNode> {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
         inflater.inflate(R.menu.node_menu, menu);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        hideProgressDialog();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.manech.app.view.user;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -58,18 +59,22 @@ public class UserFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         View view =inflater.inflate(R.layout.fragment_user, container, false);
-       // getActivity().setTitle(getString(R.string.manage_account));
-        initForm(view);
 
+        initForm(view);
         initModelObserver();
 
         return view;
     }
 
     private void initModelObserver() {
-        userId= getArguments().getLong("userId",-1);
-        final FragmentActivity fragmentActivity = requireActivity();
-        userViewModel= Injection.provideViewModelFactory(fragmentActivity).create(UserViewModel.class);
+
+        final FragmentActivity activity = getActivity();
+
+        userId = activity.getApplicationContext()
+                .getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+                .getLong(getString(R.string.saved_user_id), -1L);
+
+        userViewModel= Injection.provideViewModelFactory(activity).create(UserViewModel.class);
         userViewModel.fetchUser(userId);
         userViewModel.getCurrentUser().observe(this, new Observer<User>() {
             @Override
@@ -77,8 +82,8 @@ public class UserFragment extends Fragment {
                 if(user!=null) {
                     fillForm(user);
                 }else{
-                    fragmentActivity.finishAffinity();
-                    startActivity(new Intent(fragmentActivity, LoginActivity.class));
+                    activity.finishAffinity();
+                    startActivity(new Intent(activity, LoginActivity.class));
                 }
             }
         });

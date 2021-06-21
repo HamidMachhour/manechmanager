@@ -1,8 +1,10 @@
 package com.manech.app;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,7 +21,16 @@ import com.manech.app.model.UserViewModel;
 
 public class LoginActivity extends AppCompatActivity{
     private UserViewModel userViewModel;
-    private final String TAG = this.getClass().getName();
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        final long userId;
+        if((userId=loadUserId())!=-1 ){
+            startMainActivity(userId);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,10 +40,8 @@ public class LoginActivity extends AppCompatActivity{
             @Override
             public void onChanged(User user) {
                 if(user!=null) {
-                    Log.d(TAG,user.toString());
-                    final Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.putExtra("userId", user.getId());
-                    startActivity(intent);
+                    saveUserId(user.getId());
+                    startMainActivity(user.getId());
                 }else{
                     Toast.makeText(getApplicationContext(),
                             getString(R.string.wrong_auth), Toast.LENGTH_SHORT).show();
@@ -63,5 +72,27 @@ public class LoginActivity extends AppCompatActivity{
 
             }
         });
+    }
+
+    private long loadUserId() {
+        SharedPreferences sharedPref =getApplicationContext().getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        return sharedPref.getLong(getString(R.string.saved_user_id),-1L);
+    }
+
+    private void startMainActivity(long userId) {
+        final Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.putExtra(getString(R.string.saved_user_id), userId);
+        // start main activity
+        startActivity(intent);
+        //start service
+        intent.setComponent(new ComponentName("com.manech.app", "com.manech.app.service.ManechService"));
+        getApplicationContext().startService(intent);
+    }
+
+    private void saveUserId(long id) {
+        SharedPreferences sharedPref =getApplicationContext().getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        sharedPref.edit().putLong(getString(R.string.saved_user_id), id).apply();
     }
 }

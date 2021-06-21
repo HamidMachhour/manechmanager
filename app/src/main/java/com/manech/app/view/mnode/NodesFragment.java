@@ -2,8 +2,10 @@ package com.manech.app.view.mnode;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,6 +17,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -28,6 +31,7 @@ import com.manech.app.data.ManechNode;
 import com.manech.app.helper.MyColor;
 import com.manech.app.model.Injection;
 import com.manech.app.model.MNodeViewModel;
+import com.manech.app.service.ManechService;
 import com.manech.app.view.user.UserFragment;
 
 import java.util.List;
@@ -63,25 +67,45 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
         });
 
         showProgressDialog();
-        userId = getArguments().getLong("userId", -1);
+        userId = getActivity().getApplicationContext()
+                .getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+                .getLong(getString(R.string.saved_user_id), -1L);
+
         mNodeViewModel.fetchNodes(userId, true);
 
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        hideProgressDialog();
+    }
 
     @Override
     public void onClick(View v) {
         ManechNode node = adapter.getItem(nodesListView.getChildLayoutPosition(v));
-        replaceFragment(initNodeFragment(node.getId()));
+        initNodeFragment(node.getId());
     }
 
-    public Fragment initNodeFragment(long nodeId) {
-        Bundle bundle = new Bundle();
-        bundle.putLong("nodeId", nodeId);
-        NodeFragment f = new NodeFragment();
-        f.setArguments(bundle);
-        return f;
+    public void initNodeFragment(long nodeId) {
+        getActivity()
+                .getApplicationContext()
+                .getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+                .edit()
+                .putLong(getString(R.string.nodeid), nodeId).apply();
+
+        String backStateName = NodeFragment.class.getName();
+
+        FragmentManager manager = requireActivity().getSupportFragmentManager();
+        boolean fragmentPopped = manager.popBackStackImmediate(backStateName, 0);
+        if (!fragmentPopped) { //fragment not in back stack, create it.
+            FragmentTransaction ft = manager.beginTransaction();
+            ft.replace(R.id.main_frame_layout, new NodeFragment(), backStateName);
+            ft.addToBackStack(backStateName);
+            ft.commit();
+        }
+
     }
 
     private void showProgressDialog() {
@@ -121,7 +145,7 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
             return true;
         }
         if (id == R.id.action_manage_account) {
-            replaceFragment(initUserFragment(userId));
+            initUserFragment();
             return true;
         }
         if (id == R.id.action_logout) {
@@ -130,16 +154,21 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
         }
         return super.onOptionsItemSelected(item);
     }
+
     private void logout() {
-        requireActivity().finishAffinity();
-        startActivity(new Intent(requireContext(), LoginActivity.class));
+        ((MainActivity)getActivity()).logout();
     }
-    private Fragment initUserFragment(long userId) {
-        Bundle bundle = new Bundle(1);
-        bundle.putLong("userId", userId);
-        UserFragment f = new UserFragment();
-        f.setArguments(bundle);
-        return f;
+
+    private void initUserFragment() {
+        String backStateName = UserFragment.class.getName();
+        FragmentManager manager = requireActivity().getSupportFragmentManager();
+        boolean fragmentPopped = manager.popBackStackImmediate(backStateName, 0);
+        if (!fragmentPopped) { //fragment not in back stack, create it.
+            FragmentTransaction ft = manager.beginTransaction();
+            ft.replace(R.id.main_frame_layout, new UserFragment(), backStateName);
+            ft.addToBackStack(backStateName);
+            ft.commit();
+        }
     }
 
     @Override
@@ -163,22 +192,9 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    private void replaceFragment(Fragment fragment) {
-        String backStateName = fragment.getClass().getName();
-
-        FragmentManager manager = requireActivity().getSupportFragmentManager();
-        boolean fragmentPopped = manager.popBackStackImmediate(backStateName, 0);
-        if (!fragmentPopped) { //fragment not in back stack, create it.
-            FragmentTransaction ft = manager.beginTransaction();
-            ft.replace(R.id.main_frame_layout, fragment, backStateName);
-            ft.addToBackStack(backStateName);
-            ft.commit();
-        }
-    }
-
     public void highlightClicked(int p) {
         ManechNode node = adapter.getItem(p);
-        mNodeViewModel.highlight(node,MyColor.random(0,200));
+        mNodeViewModel.highlight(node, MyColor.random(0, 200));
     }
 
     public void duplicateClicked(int p) {

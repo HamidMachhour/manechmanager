@@ -47,4 +47,7 @@ public interface ManechNodeDAO {
 
     @Query("select * from manechnode where id=:nodeId")
     ManechNode getNode(long nodeId);
+
+    @Query("select * from manechnode where userId=:userId and (minIndex<=:max and maxIndex>=:min)")
+    List<ManechNode> nodeByMinMaxIndexes(long userId, int min, int max);
 }

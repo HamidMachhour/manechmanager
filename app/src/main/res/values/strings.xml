@@ -50,4 +50,7 @@
     <string name="general_settings">General Settings</string>
     <string name="please_wait">Please wait...</string>
     <string name="loading_data">Loading data ...</string>
+    <string name="preference_file_key">com.manech.app.preferences</string>
+    <string name="saved_user_id">com.manech.app.userId</string>
+    <string name="nodeid">nodeId</string>
 </resources>

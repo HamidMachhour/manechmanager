@@ -96,4 +96,18 @@ public class ManechNodeRepository {
                 0,0,"Manech","12345678","192.168.4.1","255.255.255.0","192.168.4.1",
                 "","","","",""));
     }
+
+    public List<ManechNode> getNodesByIndexes(long userId, int[] indexes, boolean trackState) {
+        int min, max;
+        if(indexes==null|| indexes.length==0) return null;
+        min=indexes[0]; max=indexes[0];
+        for(int i=1; i<indexes.length;i++ ){
+            if(indexes[i]>max) max=indexes[i];
+            if(indexes[i]<min) min=indexes[i];
+        }
+        final List<ManechNode> manechNodes = this.manechNodeDAO.nodeByMinMaxIndexes(userId,min,max);
+        if (trackState)
+            trackStateFor(manechNodes);
+        return manechNodes;
+    }
 }

@@ -2,8 +2,10 @@ package com.manech.app.model;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStore;
 import androidx.lifecycle.ViewModelStoreOwner;
 
 import com.manech.app.repository.ManechNodeRepository;
@@ -11,18 +13,25 @@ import com.manech.app.repository.UserRepository;
 
 import java.util.concurrent.Executor;
 
-public class ViewModelFactory implements ViewModelProvider.Factory {
+public class ViewModelFactory implements ViewModelProvider.Factory  {
 
     private final ManechNodeRepository manechNodeRepository;
     private final UserRepository userRepository;
     private final Executor executor;
-    private final ViewModelStoreOwner viewModelStoreOwner;
-
-    public ViewModelFactory(ManechNodeRepository manechNodeRepository, UserRepository userRepository, Executor executor, ViewModelStoreOwner viewModelStoreOwner) {
+    private final Context context;
+    private  final ViewModelStoreOwner viewModelStoreOwner;
+    public ViewModelFactory(ManechNodeRepository manechNodeRepository, UserRepository userRepository, Executor executor, Context context) {
         this.manechNodeRepository = manechNodeRepository;
         this.userRepository = userRepository;
         this.executor = executor;
-        this.viewModelStoreOwner = viewModelStoreOwner;
+        this.context = context;
+        this.viewModelStoreOwner=new ViewModelStoreOwner() {
+            @NonNull
+            @Override
+            public ViewModelStore getViewModelStore() {
+                return new ViewModelStore();
+            }
+        };
     }
 
     @Override
