@@ -5,14 +5,19 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
@@ -26,15 +31,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.manech.app.LoginActivity;
 import com.manech.app.MainActivity;
+import com.manech.app.QrScannerActivity;
 import com.manech.app.R;
 import com.manech.app.data.ManechNode;
 import com.manech.app.helper.MyColor;
+import com.manech.app.helper.QrCodeHelper;
 import com.manech.app.model.Injection;
 import com.manech.app.model.MNodeViewModel;
 import com.manech.app.service.ManechService;
 import com.manech.app.view.user.UserFragment;
 
+import java.io.File;
 import java.util.List;
+import java.util.ArrayList;
 
 public class NodesFragment extends Fragment implements View.OnClickListener {
     private MNodeViewModel mNodeViewModel;
@@ -54,14 +63,18 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
         nodesListView.setHasFixedSize(true);
         nodesListView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         mNodeViewModel = Injection.provideViewModelFactory(requireActivity()).create(MNodeViewModel.class);
+
+        adapter = new ManechNodeAdapter(new ArrayList<>(), NodesFragment.this);
+        nodesListView.setAdapter(adapter);
+
         mNodeViewModel.getNodes().observe(this, new Observer<List<ManechNode>>() {
 
             @Override
             public void onChanged(List<ManechNode> manechNodes) {
 
-                //update recycleview
-                adapter = new ManechNodeAdapter(manechNodes, NodesFragment.this);
-                nodesListView.setAdapter(adapter);
+                if (manechNodes != null) {
+                    adapter.updateData(manechNodes);
+                }
                 hideProgressDialog();
             }
         });
@@ -113,7 +126,13 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
     }
 
     private void hideProgressDialog() {
-        mDialog.dismiss();
+        if (mDialog != null && mDialog.isShowing() && isAdded()) {
+            try {
+                mDialog.dismiss();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -142,6 +161,14 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
                         }
                     })
                     .setNegativeButton(android.R.string.no, null).show();
+            return true;
+        }
+        if (id == R.id.action_scan_qr) {
+            scanQrCode();
+            return true;
+        }
+        if (id == R.id.action_print_all_qr) {
+            printAllQrCodes();
             return true;
         }
         if (id == R.id.action_manage_account) {
@@ -200,7 +227,7 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
     public void duplicateClicked(int p) {
         ManechNode node = adapter.getItem(p);
         mNodeViewModel.duplicateNode(node.getId());
-        showProgressDialog();
+        // Removed showProgressDialog() here to prevent UI flickering
         mNodeViewModel.fetchNodes(userId, false);
     }
 
@@ -213,10 +240,76 @@ public class NodesFragment extends Fragment implements View.OnClickListener {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         mNodeViewModel.deleteNode(node.getId());
-                        showProgressDialog();
+                        // Removed showProgressDialog() here to prevent UI flickering
                         mNodeViewModel.fetchNodes(userId, false);
                     }
                 })
                 .setNegativeButton(android.R.string.no, null).show();
     }
+
+    public void qrClicked(int p) {
+        ManechNode node = adapter.getItem(p);
+        String configJson = node.prepareConfiguration().toString();
+        Bitmap qrBitmap = QrCodeHelper.generateQrCode(configJson, 500);
+        
+        new AlertDialog.Builder(requireActivity())
+                .setTitle("Node Configuration QR")
+                .setMessage("Scan this code to import node settings")
+                .setView(createQrImageView(qrBitmap))
+                .setPositiveButton("Save as PDF", (dialog, which) -> {
+                    File pdf = QrCodeHelper.generateSingleNodePdf(node);
+                    if (pdf != null) {
+                        Toast.makeText(getContext(), "PDF saved to Downloads: " + pdf.getName(), Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getContext(), "Failed to generate PDF", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
+    }
+
+    private View createQrImageView(Bitmap bitmap) {
+        ImageView imageView = new ImageView(getContext());
+        imageView.setImageBitmap(bitmap);
+        imageView.setLayoutParams(new android.view.ViewGroup.LayoutParams(500, 500));
+        return imageView;
+    }
+
+    private void scanQrCode() {
+        Intent intent = new Intent(getContext(), QrScannerActivity.class);
+        startActivityForResult(intent, 1001);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1001 && resultCode == MainActivity.RESULT_OK) {
+            String qrData = data.getStringExtra("SCAN_RESULT");
+            if (qrData != null) {
+                ManechNode node = QrCodeHelper.parseConfigJson(qrData);
+                if (node != null) {
+                    node.setUserId(userId); // Assign current user
+                    mNodeViewModel.insert(node);
+                    Toast.makeText(getContext(), "Node imported successfully!", Toast.LENGTH_SHORT).show();
+                    mNodeViewModel.fetchNodes(userId, false);
+                } else {
+                    Toast.makeText(getContext(), "Invalid QR Code format", Toast.LENGTH_SHORT).show();
+                }
+            }
+        } else if (requestCode == 1001 && resultCode == MainActivity.RESULT_CANCELED) {
+            Toast.makeText(getContext(), "Scan canceled", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void printAllQrCodes() {
+        showProgressDialog();
+        java.util.List<ManechNode> nodes = adapter.getNodesList();
+        File pdfFile = QrCodeHelper.generateConfigPdf(nodes);
+        if (pdfFile != null && pdfFile.exists()) {
+            Toast.makeText(getContext(), "PDF saved to Downloads/ManechNodes_QR.pdf", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getContext(), "Failed to generate PDF. Check storage permissions.", Toast.LENGTH_SHORT).show();
+        }
+        hideProgressDialog();
+    }
 }
+

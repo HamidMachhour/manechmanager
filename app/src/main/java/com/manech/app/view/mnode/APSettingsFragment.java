@@ -61,7 +61,7 @@ public class APSettingsFragment extends Fragment  implements Observer<ManechNode
     private static APSettingsFragment instance;
     public static APSettingsFragment newInstance() {
         if(instance==null)
-        instance = new APSettingsFragment();
+            instance = new APSettingsFragment();
         return instance;
     }
 

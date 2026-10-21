@@ -55,6 +55,11 @@ public class ManechNodeAdapter extends RecyclerView.Adapter<NodeViewHolder> impl
             public void deleteClicked(int p) {
                 listListener.deleteClicked(p);
             }
+
+            @Override
+            public void qrClicked(int p) {
+                listListener.qrClicked(p);
+            }
         });
     }
 
@@ -62,16 +67,13 @@ public class ManechNodeAdapter extends RecyclerView.Adapter<NodeViewHolder> impl
     public void onBindViewHolder(@NonNull NodeViewHolder holder, int position) {
         ManechNode node = nodesList.get(position);
         holder.getTvHostname().setText(node.getName());
-        String ip = "IP/MASK:", wifi = "WIFI/GW: ";
+        String ip = "IP/MASK:";
         if (node.isAccessPoint()) {
             ip += node.getApIP() + "/" + node.getApMask() ;
-            wifi += node.getApName()+ "/" + node.getApGateway() ;
         } else {
             ip += node.getWifiIP() + "/" + node.getWifiMask() ;
-            wifi += node.getWifiName()+"/" + node.getWifiGateway();;
         }
         holder.getTvIP().setText(ip);
-        holder.getTvWifiName().setText(wifi);
         String description = node.getDescription();
         String desc = "Indexes: [" + node.getMinIndex() + ", " + node.getMaxIndex() + "]\n";
         desc += "Pixels: [" + node.getMinPixel() + ", " + node.getMaxPixel() + "]\n";
@@ -133,4 +135,16 @@ public class ManechNodeAdapter extends RecyclerView.Adapter<NodeViewHolder> impl
         return nodesList.get(itemPosition);
     }
 
+    public List<ManechNode> getNodesList() {
+        return nodesList;
+    }
+
+    public void updateData(List<ManechNode> newList) {
+        this.nodesList = newList;
+        this.allNodes = new ArrayList<>(newList);
+        notifyDataSetChanged();
+    }
+
 }
+
+

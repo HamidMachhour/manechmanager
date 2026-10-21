@@ -94,8 +94,9 @@ public class MNodeViewModel extends ViewModel {
     public void populate(long userId) {
         executor.execute(() -> {
             manechNodeRepository.populate(userId);
+            fetchNodes(userId, false);
+
         });
-        fetchNodes(userId, false);
     }
 
     public void duplicateNode(long nodeId) {

@@ -1,0 +1,324 @@
+DIRECTIVES : APPLY THE "MANECH" LOOK AND FEEL TO CURRENT ANDROID PROJECT
+====================================================================================
+
+GOAL
+Restyle the current project so its screens look like Manech: white surfaces, orange
+(#ff6600) text/toolbar accents, green (#008000) card headers/borders/icons,
+elevated rounded cards, flat outlined vector icons, and collapsible (accordion)
+cards driven by an arrow icon. Change visuals only; do NOT change business logic,
+data flow, navigation, IDs used by existing code, or strings' meaning.
+
+SCOPE / RULES
+- Target is a native Android app (XML layouts + Java/Kotlin). If the target uses
+  Compose or another stack, reproduce the same visual tokens and behaviour with
+  that stack's equivalents instead of the XML below.
+- Reuse existing view IDs and resource names in the target project. Only add new
+  resources; never rename or delete existing ones.
+- All user-visible text must come from string resources (no hard-coded text).
+  Add new strings to values/strings.xml (and values-ar/ if the target is localised).
+- Use start/end (not left/right) for margins/padding/gravity so RTL (Arabic) works.
+  Exception: do not mirror directional arrows used for expand/collapse (they are
+  up/down only).
+- Prefer minimal diffs. Convert screens one at a time; keep the project compiling
+  after each screen.
+
+--------------------------------------------------------------------------------
+STEP 1 - DEPENDENCIES
+--------------------------------------------------------------------------------
+Add to app/build.gradle (skip any already present):
+  implementation 'androidx.appcompat:appcompat:<existing or latest>'
+  implementation 'androidx.cardview:cardview:1.0.0'
+  implementation 'com.google.android.material:material:1.3.0'   (or newer)
+Sync Gradle.
+
+--------------------------------------------------------------------------------
+STEP 2 - COLOR TOKENS  (res/values/colors.xml)
+--------------------------------------------------------------------------------
+Add/replace with these exact names so the drawables below resolve. NOTE the
+(unusual) naming: colorPrimary is WHITE, colorPrimaryDark is ORANGE.
+
+  <color name="colorPrimary">#FFF</color>          <!-- white: surfaces, text on green headers -->
+  <color name="colorPrimaryDark">#ff6600</color>   <!-- orange: title bar, secondary text, card shadow -->
+  <color name="colorAccent">#008000</color>        <!-- green: card headers, borders, icons, primary text -->
+
+If the target already uses these names for different colours, create the three
+colours under the names above and migrate only the screens being restyled (or
+define a theme overlay) rather than silently recolouring unrelated screens.
+
+Theme (res/values/styles.xml or themes.xml):
+  <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+      <item name="colorPrimary">@color/colorPrimary</item>
+      <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+      <item name="colorAccent">@color/colorAccent</item>
+      <item name="windowNoTitle">true</item>
+  </style>
+  <style name="ToolbarTheme" parent="Theme.AppCompat.Light.NoActionBar">
+      <item name="android:textColorPrimary">@color/colorPrimary</item>
+      <item name="android:textColorSecondary">@color/colorAccent</item>
+      <item name="android:textColor">@color/colorPrimaryDark</item>
+  </style>
+The vector icons rely on ?attr/colorPrimary and ?attr/colorAccent, so the
+activity theme MUST define them as above.
+
+Colour usage rules:
+- Screen/background: white (#FFFFFF / @color/colorPrimary).
+- Screen title bar (TextView above the toolbar): background colorPrimaryDark
+  (orange), text colorPrimary (white), 20sp, centered.
+- Card header strip: background colorAccent (green), text colorPrimary (white), 16sp.
+- Primary text in lists/cards (titles, prices): colorAccent, 18sp.
+- Secondary text (descriptions, codes, state): colorPrimaryDark, 14sp.
+- Borders/outlines: colorAccent, 1dp.
+- Card shadow tint: android:outlineSpotShadowColor="@color/colorPrimaryDark".
+
+--------------------------------------------------------------------------------
+STEP 3 - SHAPE DRAWABLES  (res/drawable/)
+--------------------------------------------------------------------------------
+border.xml  (outlined item tile, 5dp radius, transparent fill)
+  <?xml version="1.0" encoding="utf-8"?>
+  <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+      <stroke android:color="@color/colorAccent" android:width="1dp"/>
+      <corners android:radius="5dp"/>
+  </shape>
+
+border2.xml  (square outlined box, e.g. around inputs/images)
+  <?xml version="1.0" encoding="utf-8"?>
+  <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+      <stroke android:color="@color/colorAccent" android:width="1dp"/>
+  </shape>
+
+border3.xml  (white rounded "chip/panel", 10dp radius - used for action-icon groups,
+              address/info panels, dashboard sub-panels)
+  <?xml version="1.0" encoding="utf-8"?>
+  <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+      <stroke android:color="@color/colorAccent" android:width="1dp"/>
+      <corners android:radius="10dp"/>
+      <solid android:color="@color/colorPrimary"/>
+  </shape>
+
+--------------------------------------------------------------------------------
+STEP 4 - ICON SYSTEM
+--------------------------------------------------------------------------------
+Style: Material "outlined" 24dp vector drawables (VectorDrawable XML), single
+colour, no gradients, no raster PNGs. Source from Material Icons (Android Studio:
+Resource Manager > + > Vector Asset > Clip Art), 24dp, outlined variant.
+
+Naming: ic_<name>.xml, lowercase snake_case (ic_add, ic_edit, ic_delete,
+ic_delete_forever, ic_copy, ic_share, ic_search, ic_filter, ic_refresh,
+ic_restore, ic_save_changes, ic_back, ic_home, ic_store, ic_item, ic_order,
+ic_sell, ic_shopping_cart, ic_add_shopping_cart, ic_favorite,
+ic_favorite_border, ic_list, ic_grid, ic_map, ic_qr_code, ic_scan_barcode,
+ic_file_download, ic_file_upload, ic_logout, ic_manage_accounts, ic_check,
+ic_cancel, ic_arrow_up, ic_arrow_down). Create only the ones the target needs.
+
+Tinting convention (copy exactly so icons recolour with the theme):
+  <vector xmlns:android="http://schemas.android.com/apk/res/android"
+      android:width="24dp" android:height="24dp"
+      android:viewportWidth="24" android:viewportHeight="24"
+      android:tint="?attr/colorAccent">                 <!-- green for content/toolbar icons -->
+      <path android:fillColor="@android:color/white" android:pathData="..."/>
+  </vector>
+- Content & toolbar icons (ic_delete, ic_home, ic_add, ...): android:tint="?attr/colorAccent"
+  (green), fillColor white (tint overrides it).
+- Icons placed on a GREEN card header (ic_arrow_up / ic_arrow_down):
+  android:tint="?attr/colorPrimary" (white).
+- Do not hard-code icon colours (#000 etc.); always tint via theme attributes.
+
+Reference path data for the two collapse arrows (use verbatim):
+  ic_arrow_down pathData: M7.41,8.59L12,13.17l4.59,-4.58L18,10l-6,6 -6,-6 1.41,-1.41z
+  ic_arrow_up   pathData: M7.41,15.41L12,10.83l4.59,4.58L18,14l-6,-6 -6,6z
+
+Icon sizing in layouts:
+- In-card action icons: 30dp x 30dp, layout_margin 4dp, padding 6dp, scaleType fitXY,
+  and ALWAYS set android:contentDescription (string resource).
+- Collapse arrow in header: 25dp x 25dp, layout_margin 4dp.
+- Toolbar/menu icons: app:showAsAction="always", icon = @drawable/ic_*,
+  order via android:orderInCategory (back = 0 first).
+- Group several action icons vertically/horizontally inside a LinearLayout with
+  android:background="@drawable/border3" and layout_margin 4dp (the "action chip").
+  When overlaid on an image, place that chip top-end (RelativeLayout, gravity="end").
+- Placeholder image for missing photos: a vector logo/placeholder drawable
+  (ic_<app>_logo, light grey #d3d3d3 fill) used as android:src with scaleType fitXY.
+
+--------------------------------------------------------------------------------
+STEP 5 - CARD DESIGN
+--------------------------------------------------------------------------------
+A. Section card (used for forms, filters, dashboard blocks, detail sections):
+   Root = androidx.cardview.widget.CardView with EXACTLY:
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:outlineSpotShadowColor="@color/colorPrimaryDark"
+     app:cardCornerRadius="4dp"
+     app:cardElevation="4dp"
+     app:cardUseCompatPadding="true"
+   Child = vertical LinearLayout containing:
+     1) HEADER (green strip) - see collapsible pattern below
+     2) CONTENT (white body) with android:padding="4dp" (or 2dp horizontally)
+
+B. List/grid item tile (products, stores, orders):
+   Root = LinearLayout/RelativeLayout, layout_margin 2-4dp,
+   android:background="@drawable/border" (green 1dp outline, 5dp corners).
+   Layout order: image on top (scaleType fitXY, margin 2-4dp) -> text block
+   (padding 2dp): title (centered, ellipsize end, maxLines 2, 18sp, colorAccent),
+   price (18sp, colorAccent), then description/code/state lines (14sp,
+   colorPrimaryDark, maxLines 2, ellipsize end).
+   Action icons are overlaid on the image top-end inside a border3 chip.
+   Provide both a list variant (item_listview*.xml) and grid variant
+   (item_gridview*.xml) if the target supports a view-format toggle.
+
+C. Inputs inside cards: standard EditText/Spinner/CheckBox, single line
+   (maxLines=1), hints from string resources; place related fields side by side
+   with layout_width="0dp" + layout_weight="1". Tint checkboxes/radios with
+   android:buttonTint="@color/colorAccent" and textColor colorAccent.
+
+D. Spacing: screen root margin 4dp; cards rely on cardUseCompatPadding for outer
+   spacing; keep 4dp as the base unit (2dp for tight, 8dp for generous).
+
+--------------------------------------------------------------------------------
+STEP 6 - COLLAPSIBLE CARD PATTERN (core behaviour)
+--------------------------------------------------------------------------------
+XML skeleton (copy and rename IDs per card, keep the suffix convention
+<name>_header / <name>_content / <name>_arrow):
+
+  <androidx.cardview.widget.CardView ... (see 5A)>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+      <LinearLayout
+          android:id="@+id/NAME_header"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:background="@color/colorAccent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal">
+
+          <ImageView
+              android:id="@+id/NAME_arrow"
+              android:layout_width="25dp" android:layout_height="25dp"
+              android:layout_margin="4dp"
+              android:contentDescription="@string/expand_collapse"
+              android:src="@drawable/ic_arrow_down" />          <!-- ic_arrow_up if default-expanded -->
+
+          <TextView
+              android:layout_width="0dp" android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:text="@string/NAME_title"
+              android:textColor="@color/colorPrimary"
+              android:textSize="16sp" />
+      </LinearLayout>
+
+      <LinearLayout
+          android:id="@+id/NAME_content"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:orientation="vertical"
+          android:padding="4dp"
+          android:visibility="gone">                            <!-- "visible" if default-expanded -->
+          ... card body ...
+      </LinearLayout>
+    </LinearLayout>
+  </androidx.cardview.widget.CardView>
+
+Rules:
+- The whole HEADER row is the click target (set the listener on the header
+  LinearLayout, not only on the arrow).
+- Arrow icon: ic_arrow_down when collapsed, ic_arrow_up when expanded. The icon
+  always matches the CURRENT state.
+- Default state: filter/search cards start COLLAPSED (content visibility=gone,
+  arrow down). Primary data/form cards (e.g. item title/images) start EXPANDED
+  (content visible, arrow up). Keep initial XML visibility and initial arrow
+  consistent.
+- Toggle uses View.GONE (not INVISIBLE) so the layout reflows.
+- Multiple cards on one screen are independent (accordion-free): toggling one does
+  not collapse the others, unless the target explicitly requires accordion.
+- Put long forms in a root ScrollView so expanded cards remain reachable.
+- Optionally restore state across rotation by saving each content's visibility in
+  onSaveInstanceState (only if the target already persists UI state).
+
+Java helper (put in a shared helper class, e.g. CollapsibleCard.java, and reuse
+everywhere instead of duplicating per fragment):
+
+  public final class CollapsibleCard {
+      private CollapsibleCard() {}
+
+      /** Wires header click to show/hide content and swap the arrow icon. */
+      public static void bind(View header, View content, ImageView arrow) {
+          header.setOnClickListener(v -> toggle(content, arrow));
+          setExpanded(content, arrow, content.getVisibility() == View.VISIBLE);
+      }
+
+      public static void toggle(View content, ImageView arrow) {
+          setExpanded(content, arrow, content.getVisibility() == View.GONE);
+      }
+
+      public static void setExpanded(View content, ImageView arrow, boolean expanded) {
+          content.setVisibility(expanded ? View.VISIBLE : View.GONE);
+          arrow.setImageResource(expanded ? R.drawable.ic_arrow_up : R.drawable.ic_arrow_down);
+      }
+  }
+
+Usage in a fragment/activity:
+  CollapsibleCard.bind(
+      root.findViewById(R.id.filter_header),
+      root.findViewById(R.id.filter_content),
+      root.findViewById(R.id.filter_arrow));
+
+(Kotlin projects: write the equivalent top-level/extension function with the same
+behaviour.)
+
+Reusable filter card: for any list screen that has search/sort/filter, build ONE
+collapsible card layout (e.g. xxx_filter_card.xml: search EditText, price/date
+range fields side by side, Spinner for sort/status, optional CheckBox) plus one
+binder class (e.g. XxxFilterCard.bind(root, listener)) that wires the collapse
+toggle AND the input listeners (TextWatcher / OnItemSelectedListener ->
+listener.onCriteriaChanged(...)). Include it in the screen via <include>.
+Do NOT also add a separate search icon to the toolbar for the same screen.
+
+--------------------------------------------------------------------------------
+STEP 7 - TOOLBAR / TITLE
+--------------------------------------------------------------------------------
+Screen scaffold (top to bottom): orange title TextView (tvFragmentTitle) ->
+androidx.appcompat.widget.Toolbar (app:theme="@style/ToolbarTheme") ->
+ProgressBar -> content frame. Toolbar menu items use the green outlined icons
+from Step 4, showAsAction="always", back action first.
+
+--------------------------------------------------------------------------------
+STEP 8 - APPLY TO THE TARGET PROJECT (procedure)
+--------------------------------------------------------------------------------
+1. Inventory target screens; list those with forms, filters, detail sections,
+   lists/grids, dashboards, dialogs.
+2. Add colours, theme, shape drawables, arrow icons, and CollapsibleCard helper
+   (Steps 2-3, 4, 6).
+3. Replace/convert icons used by the target with the outlined, theme-tinted
+   vectors from Step 4 (keep existing icon resource names if code references them;
+   otherwise add the new ones and update references).
+4. Convert each screen section into a Section Card (5A). Make sections with
+   many fields or secondary info collapsible (Step 6); keep the first/primary
+   section expanded.
+5. Convert list/grid rows to the outlined tile style (5B).
+6. Restyle toolbar/title (Step 7).
+7. Add contentDescription for every ImageView/icon, and RTL-safe start/end
+   attributes.
+8. Build and run: ./gradlew :app:assembleDebug (or the target's equivalent), then
+   verify visually on a device/emulator in both LTR and RTL.
+
+--------------------------------------------------------------------------------
+ACCEPTANCE CHECKLIST
+--------------------------------------------------------------------------------
+[ ] Colours: white surfaces, orange title bar/secondary text, green headers/borders/icons.
+[ ] Every section is a CardView: radius 4dp, elevation 4dp, compat padding, orange shadow tint.
+[ ] Collapsible cards: green header with white 16sp title + 25dp arrow; tapping the
+    whole header toggles content (GONE/VISIBLE) and swaps ic_arrow_down/up.
+[ ] Filter cards start collapsed; primary cards start expanded; arrow matches state.
+[ ] All icons are 24dp Material outlined vectors tinted via ?attr/colorAccent (or
+    ?attr/colorPrimary on green headers); no hard-coded colours or PNGs.
+[ ] List/grid tiles use border.xml; action icon groups use border3.xml.
+[ ] No hard-coded strings; contentDescriptions present; start/end used (RTL OK).
+[ ] Toggle logic lives in ONE shared helper, not copy-pasted per screen.
+[ ] Project builds, existing behaviour/tests unchanged.
+
+REFERENCE FILES IN THE SOURCE PROJECT (Manech)
+- app/src/main/res/layout/order_filter_card.xml, store_filter_card.xml  (collapsible filter cards)
+- app/src/main/res/layout/fragment_item_edit_mode.xml  (multiple collapsible section cards)
+- app/src/main/res/layout/item_listview.xml, item_gridview.xml, store_view.xml  (tiles + action chips)
+- app/src/main/res/drawable/border.xml, border2.xml, border3.xml, ic_arrow_up.xml, ic_arrow_down.xml, ic_delete.xml
+- app/src/main/res/values/colors.xml, styles.xml
+- app/src/main/java/com/manech/manechapp/view/mstore/StoreFilterCard.java  (toggle + binder)
+- app/src/main/java/com/manech/manechapp/view/order/OrderFilterCard.java
